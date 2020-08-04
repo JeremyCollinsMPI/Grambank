@@ -1,20 +1,6 @@
 from MakeArrays import *
 from model import *
 
-
-
-
-
-
-#   def __init__(self, output, missing_data_matrix, samples, types, classes, features)
-  
-
-
-
-
-
-
-
 def test1():
   array, missing_data_matrix , samples, features, input_array = make_simulated_array()
   model = Model1(array, missing_data_matrix, samples, 1, 7, features)
@@ -33,7 +19,6 @@ def test2():
 
 def test3():
   array, missing_data_matrix, samples, features, df = make_indo_european_array()
-#   print(df)
   print(df.index)
   print(len(df.index))
   array2 = np.array(rep(1, 103))
