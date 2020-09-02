@@ -1,1 +1,1 @@
-docker run -it --rm --name grambank -v $PWD:/src tensorflow/tensorflow:1.12.0-py3 /bin/bash
+docker run -it --rm --name grambank -v $PWD:/src grambank /bin/bash

@@ -3,7 +3,6 @@ import numpy as np
 from numpy import random
 from nexus import NexusReader
 
-
 def rep(x,y):
 	new=[]
 	for m in range(y):
@@ -13,67 +12,72 @@ def rep(x,y):
 
 np.random.seed(10)
 
-def make_grambank_dataframe():
+def make_grambank_dataframe(dataframe_given=False, df=None):
   data = readData('data.txt')
   languages = getUniqueLanguages(data)
   features = getUniqueFeatures(data)
-
-  print(len(features))
-  print(len(languages))
-
-  df = createDataFrame(data)
+  if not dataframe_given:
+    df = createDataFrame(data)
+    samples = len(languages)
+  else:
+    samples = len(df)
   df = df.replace('?', np.nan) 
   df = df.replace(np.nan, 0)
-  
-
   array = df.to_numpy()
   missing_data_matrix = np.ones(array.shape)
+  return array, missing_data_matrix, samples, len(features), df
 
-  print(array[0])
-  return array, missing_data_matrix, len(languages), len(features), df
 
-def make_simulated_array():
-  '''
-  structure should be (languages, samples)
-  you have seven clusters
-  e.g. ten features, 70 languages
-  cluster1 = [1,1,1,0,0,0,0,0,1,1]
-  cluster2 = [0,0,1,0,0,0,0,0,1,1]
-  '''
-  clusters = []
-  number_of_clusters = 7
-  features = 10
-  languages_per_cluster = 10
-  for i in range(number_of_clusters):
-    clusters.append(random.randint(2,size =features))
+def find_relatedness(index1, index2, languages_dataframe):
+  lineage1 = languages_dataframe.lineage[index1]
+  lineage2 = languages_dataframe.lineage[index2]
+  if pd.isnull(lineage1) or pd.isnull(lineage2):
+    return 100
+  lineage1 = lineage1.split('/')
+  lineage2 = lineage2.split('/')
+  genera_in_common = list(set(lineage1).intersection(set(lineage2)))
+  if genera_in_common == []:
+    return 100
+  last_genus_in_common = genera_in_common[-1]
+  position1 = len(lineage1) - lineage1.index(last_genus_in_common)
+  position2 = len(lineage2) - lineage2.index(last_genus_in_common)
+  return max(position1, position2)
+  
+def find_distance(index1, index2, languages_dataframe):
+  lat1 = languages_dataframe.latitude[index1]
+  lat2 = languages_dataframe.latitude[index2]
+  lon1 = languages_dataframe.longitude[index1]
+  lon2 = languages_dataframe.longitude[index2]
+  return haversine(lon1, lat1, lon2, lat2)
+
+def make_relatedness_array(dataframe, languages_dataframe):
   result = []
-  for i in range(number_of_clusters):
-    for j in range(languages_per_cluster):
-      result.append(clusters[i])
+  for index1 in dataframe.index:  
+    temp = []
+    for index2 in dataframe.index:
+      print(index1)
+      print(index2)
+      if not index1 == index2:
+        relatedness = find_relatedness(index1, index2, languages_dataframe)
+        print(relatedness)
+        temp.append(relatedness)
+    result.append(temp)
   result = np.array(result)
-  missing_data_matrix = np.ones(result.shape)
-  input_array = []
-  for i in range(number_of_clusters):
-    to_append = rep(0, number_of_clusters)
-    to_append[i] = 1
-    for j in range(languages_per_cluster):
-      input_array.append([to_append])      
-  return result, missing_data_matrix, number_of_clusters*languages_per_cluster, features, input_array
+  return result
 
-def make_indo_european_array():
-  n = NexusReader.from_file('IELex_Bouckaert2012.nex')
-  df = pd.DataFrame.from_dict(n.data.matrix, orient='index')
-  df = df.replace('?', np.nan) 
-  df = df.replace(np.nan, 0)
-  array = df.to_numpy()
-  array = np.ndarray.astype(array, dtype=np.float32)
-  missing_data_matrix = np.ones(array.shape, dtype=np.float32)
-  number_of_clusters = 7
-  features = 6280
-  samples = 103
-  return array, missing_data_matrix, samples, features, df
+def make_distance_array(dataframe, languages_dataframe):
+  result = []
+  for index1 in dataframe.index:  
+    temp = []
+    for index2 in dataframe.index:
+      if not index1 == index2:
+        distance = find_distance(index1, index2, languages_dataframe)
+        temp.append(distance)
+    result.append(temp)
+  result = np.array(result)
+  return result
 
 
 
-
-
+  
+  
